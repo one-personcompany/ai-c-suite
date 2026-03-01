@@ -49,6 +49,20 @@ case "$AGENT_CLI" in
 $QUESTION"
         echo "$FULL_PROMPT" | codex exec -
         ;;
+        ;;
+    claude)
+        if ! command -v claude &> /dev/null; then
+            echo "错误: claude 未安装"
+            exit 1
+        fi
+        FULL_PROMPT="$AGENTS_CONTENT
+
+---
+
+请根据你的角色回答以下问题：
+
+$QUESTION"
+        echo "$FULL_PROMPT" | claude exec -
     qwen)
         if ! command -v qwen &> /dev/null; then
             echo "错误: qwen 未安装"
