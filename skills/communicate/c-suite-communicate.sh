@@ -1,7 +1,7 @@
 #!/bin/bash
 # c-suite-communicate.sh - 与虚拟高管团队对话
 # 用法: AGENT_CLI=codex ./c-suite-communicate.sh <角色> <问题>
-# 默认使用 codex，可选: codex, qwen
+# 默认使用 codex，可选: codex, claude, qwen
 
 AGENT_CLI="${AGENT_CLI:-codex}"
 ROLE="${1:-CEO}"
@@ -15,9 +15,10 @@ if [ -z "$QUESTION" ]; then
     echo "  $0 CEO \"我们应该进入美国市场吗？\""
     echo ""
     echo "  # 指定其他 CLI"
-    echo "  AGENT_CLI=qwen $0 CTO \"架构评估\""
+    echo "  AGENT_CLI=claude $0 CTO \"架构评估\""
+    echo "  AGENT_CLI=qwen $0 CFO \"财务分析\""
     echo ""
-    echo "支持的 CLI: codex, qwen"
+    echo "支持的 CLI: codex, claude, qwen"
     echo "角色: CEO, CTO, COO, CFO, CMO"
     exit 1
 fi
@@ -34,49 +35,31 @@ if [ -z "$AGENTS_CONTENT" ]; then
 fi
 
 # 根据 CLI 执行
-case "$AGENT_CLI" in
-    codex)
-        if ! command -v codex &> /dev/null; then
-            echo "错误: codex 未安装"
-            exit 1
-        fi
-        FULL_PROMPT="$AGENTS_CONTENT
+if [ "$AGENT_CLI" = "codex" ]; then
+    FULL_PROMPT="$AGENTS_CONTENT
 
 ---
 
 请根据你的角色回答以下问题：
 
 $QUESTION"
-        echo "$FULL_PROMPT" | codex exec -
-        ;;
-        ;;
-    claude)
-        if ! command -v claude &> /dev/null; then
-            echo "错误: claude 未安装"
-            exit 1
-        fi
-        FULL_PROMPT="$AGENTS_CONTENT
+    echo "$FULL_PROMPT" | codex exec -
+elif [ "$AGENT_CLI" = "claude" ]; then
+    FULL_PROMPT="$AGENTS_CONTENT
 
 ---
 
 请根据你的角色回答以下问题：
 
 $QUESTION"
-        echo "$FULL_PROMPT" | claude exec -
-    qwen)
-        if ! command -v qwen &> /dev/null; then
-            echo "错误: qwen 未安装"
-            exit 1
-        fi
-        # qwen 不支持 stdin，用 -y 自动确认
-        echo "$AGENTS_CONTENT"
-        echo "---"
-        echo "问题: $QUESTION"
-        qwen "$QUESTION" -y
-        ;;
-    *)
-        echo "错误: 不支持的 CLI: $AGENT_CLI"
-        echo "支持的: codex, qwen"
-        exit 1
-        ;;
-esac
+    echo "$FULL_PROMPT" | claude exec -
+elif [ "$AGENT_CLI" = "qwen" ]; then
+    echo "$AGENTS_CONTENT"
+    echo "---"
+    echo "问题: $QUESTION"
+    qwen "$QUESTION" -y
+else
+    echo "错误: 不支持的 CLI: $AGENT_CLI"
+    echo "支持的: codex, claude, qwen"
+    exit 1
+fi
